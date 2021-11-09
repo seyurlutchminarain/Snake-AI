@@ -1,273 +1,288 @@
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Random;
+import za.ac.wits.snake.DevelopmentAgent;
 
+public class MyAgent extends DevelopmentAgent {
 
-public class MyAgent extends za.ac.wits.snake.MyAgent {
-
-    
-	public static void main(String args[]) throws IOException {
+    public static void main(String args[]) {
         MyAgent agent = new MyAgent();
         MyAgent.start(agent, args);
     }
-  
-	int[][]Board = new int[50][50];
-	
-	
-	
-	Node[][] nodes= new Node[50][50];
+    
+    int[][] Board = new int[50][50];
+    BreadthFirstSearch test = new BreadthFirstSearch();
+    
+    // encoding moves according to game dynamics
+    int up = 0;
+    int down  = 1;
+    int left = 2;
+    int right = 3;
+    int left_head = 4;
+    int straight = 5;
+    int right_head = 6;
+
     @Override
     public void run() {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(System.in))) {
             String initString = br.readLine();
-            
             String[] temp = initString.split(" ");
             int nSnakes = Integer.parseInt(temp[0]);
-             
-             
-           
-            int up =0;
-            int down =1;
-            int left=2;
-            int right=3;
-            int str=5;
-            int lh=4;
-            int rh=6;
-            
-       
-            
+
             while (true) {
                 String line = br.readLine();
                 if (line.contains("Game Over")) {
                     break;
                 }
 
-                String apple = line;
-               String[] split = apple.split(" ");
-               int ax = Integer.parseInt(split[0]);
-               int ay = Integer.parseInt(split[1]);
-               
-
-                // read in obstacles and do something with them!
-                int nObstacles = 3;
+                // Handle apple states
                 
-               
+                String apple1 = line; // invisible apple
+                String apple2 = br.readLine(); // regular apple
                 
-                for (int obstacle = 0; obstacle < nObstacles; obstacle++) {
-                    String obs = br.readLine();
-                    String[]splitobs = obs.split(" ");
-                    
-                    for(int i=0;i<splitobs.length;i++) {
-                    	String cords = splitobs[i];
-                    	String[] cord = cords.split(",");
-                    	int x = Integer.parseInt(cord[0]);
-                    	int y = Integer.parseInt(cord[1]);
-                    	Board[y][x]=1;
-                    	
-                    }
-                }
-              
-               
+                String[] inv_apple_cords = apple1.split(" ");
+                int inv_apple_x = Integer.parseInt(inv_apple_cords[0]);
+                int inv_apple_y = Integer.parseInt(inv_apple_cords[1]);
+                
+                String[] apple_cords = apple2.split(" ");
+                int apple_x = Integer.parseInt(apple_cords[0]);
+                int apple_y = Integer.parseInt(apple_cords[1]); // apples handled correctly
+                
+                
+                int head_x = 0, head_y = 0;
+                int tail_x = 0, tail_y = 0;
+                
                 int mySnakeNum = Integer.parseInt(br.readLine());
-                int headx = 0,heady = 0;
-                int neckx = 0,necky = 0;
-               
                 for (int i = 0; i < nSnakes; i++) {
                     String snakeLine = br.readLine();
-                    
                     if (i == mySnakeNum) {
                         //hey! That's me :)
-                    	String[] split1 = snakeLine.split(" ");
+                    	String[] snake_state = snakeLine.split(" ");
+                    	String condition = snake_state[0];
+                    	// ignore snake_state[1] & snake_state[2] -> Just describes length and kills
                     	
-                    	for(int k=3;k<split1.length-1;k++) {
-            				String body = split1[k];
-            				String b = split1[k+1];
-            				String[]s = body.split(",");
-            				String[]b2 = b.split(",");
-            				int x = Integer.parseInt(s[0]);
-            				int y = Integer.parseInt(s[1]);
-            				int x2 = Integer.parseInt(b2[0]);
-                    		int y2 = Integer.parseInt(b2[1]);
-                    		int minx = Math.min(x,x2);
-                    		int maxx = Math.max(x,x2);
-                    		int miny = Math.min(y, y2);
-                    		int maxy = Math.max(y, y2);
-                    		for(int a = minx;a<=maxx;a++) {
-                    			for(int c = miny;c<=maxy;c++) {
-                    				Board[a][c]=1;
-                    			}
-                    		}
-            			
-            		}
-                    	String head = split1[3];
-                    	String neck = split1[4];
-                   
-                    	String[]tails = tail.split(",");
-                    	String[] necks = neck.split(",");
-                    	String[] heads = head.split(",");
+                    	int start = 3;
                     	
-                    	neckx = Integer.parseInt(necks[0]);
-                    	necky = Integer.parseInt(necks[1]);
-                    	headx = Integer.parseInt(heads[0]);
-                    	heady = Integer.parseInt(heads[1]);
-                    	
-                    	
-                    	 
-                    }
-                    //do stuff with other snakes
-                    String[] s = snakeLine.split(" ");
-                    if(s[0].equals("alive")) {
-                    	for(int k = 3;k<s.length-1;k++) {
-                    		String str1 = s[k];
-                    		String str2 = s[k+1];
-                    		
-                    		String[] cor = str1.split(",");
-                    		String[] cor2 = str2.split(",");
-                    		
-                    		int x = Integer.parseInt(cor[0]);
-                    		int y = Integer.parseInt(cor[1]);
-                    		int x2 = Integer.parseInt(cor2[0]);
-                    		int y2 = Integer.parseInt(cor2[1]);
-                    		int minx = Math.min(x,x2);
-                    		int maxx = Math.max(x,x2);
-                    		int miny = Math.min(y, y2);
-                    		int maxy = Math.max(y, y2);
-                    		for(int z = minx;z<=maxx;z++) {
-                    			for(int p = miny;p<=maxy;p++) {
-                    				Board[p][z]=1;
-                    			}
-                    		}
-                    		
+                    	if (snakeLine.contains("invisible"))
+                    	{
+                    		start = 4;
                     	}
+                    	
+                    	for (int k = start; k < snake_state.length - 1; k++) // Looping through the head, body and tail cords
+                    	{
+                    		String body = snake_state[k];
+                    		String next_body = snake_state[k + 1];
+                    		
+                    		String[] body_split = body.split(",");
+                    		String[] next_body_split = next_body.split(",");
+                    		
+                    		int body_x = Integer.parseInt(body_split[0]);
+                    		int body_y = Integer.parseInt(body_split[1]);
+                    		
+                    		int next_body_x = Integer.parseInt(next_body_split[0]);
+                    		int next_body_y = Integer.parseInt(next_body_split[1]);
+                    		
+                    		int min_x = Math.min(body_x, next_body_x);
+                    		int max_x = Math.max(body_x, next_body_x);
+                    		
+                    		int min_y = Math.min(body_y, next_body_y);
+                    		int max_y = Math.max(body_y, next_body_y);
+                    		
+                    		for (int r = min_x; r <= max_x; r++)
+                    		{
+                    			for (int c = min_y; c <= max_y; c++)
+                    			{
+                    				Board[c][r] = 2; // Marking our snake on the board
+                    			}
+                    		}
+                    	}
+                    	
+                		String[] snake_head = snake_state[3].split(","); // head of snake
+                		head_x = Integer.parseInt(snake_head[0]);
+                		head_y = Integer.parseInt(snake_head[1]);
+                		
+                		String[] snake_tail = snake_state[snake_state.length - 1].split(",");
+                		tail_x = Integer.parseInt(snake_tail[0]);
+                		tail_y = Integer.parseInt(snake_tail[1]); // mark snakes tail
+
+                		
+                		
+                    	
+                    }
+                    if (i != mySnakeNum) 
+                    {
+                        //do stuff with other snakes
+                        String[] enemy_state = snakeLine.split(" ");
+                        String enemy_condition = enemy_state[0];
+                        int start = 3;
+                        
+                        if (snakeLine.contains("invisible"))
+                        {
+                        	start = 4;
+                        }
+                        
+                        for (int k = start; k < enemy_state.length - 1; k++)
+                        {
+                        	String enemy_body = enemy_state[k];
+                        	String enemy_next = enemy_state[k + 1];
+                        	
+                        	String[] body_state = enemy_body.split(",");
+                        	String[] next_body_state = enemy_next.split(",");
+                        	
+                        	
+                        	int body_x = Integer.parseInt(body_state[0]);
+                        	int body_y = Integer.parseInt(body_state[1]);
+                        	int next_body_x = Integer.parseInt(next_body_state[0]);
+                        	int next_body_y = Integer.parseInt(next_body_state[1]);
+     
+                        	int min_x = Math.min(body_x, next_body_x);
+                        	int min_y = Math.min(body_y, next_body_y);
+                        	
+                        	int max_x = Math.max(body_x, next_body_x);
+                        	int max_y = Math.max(body_y, next_body_y);
+                        	
+                        	for (int r = min_x; r <= max_x; r++)
+                        	{
+                        		for (int c = min_y; c <= max_y; c++)
+                        		{
+                        			Board[c][r] = 1; // marking enemy states
+                        		}
+                        	}
+                        }
+                    }
+
+
+                }
+                //finished reading, calculate move:
+                Node Start = new Node(head_x, head_y);
+                Node Goal;
+                
+                
+                Goal = new Node(apple_x, apple_y); // try and figure out what to do when invisible
+
+                if (getDistance(Start, Goal) >= 35)
+                {
+                	Board[tail_y][tail_x] = 0;
+                	Goal = new Node(tail_x, tail_y); // tail chase
+                }
+                else
+                {
+                	int checkTrap = 0;
+                	
+                	for (Node state : Goal.neighbors)
+                	{
+                		if (state.isObstacle == true)
+                		{
+                			checkTrap++;
+                		}
+                		if (checkTrap > 2)
+                		{
+                			Goal = new Node(tail_x, tail_y); // checking if trap is true -> tail chase
+                		}
+                	}
+                }
+                
+                
+                
+                Node current = test.searchBoard(Board, Start, Goal);
+                
+
+
+                
+                
+                while (current != null)
+                {
+                	Board[current.row][current.col] = 3; // destination node
+                	current = current.parent; // backtrack
+                }
+
+                
+                // implement moves
+                if (head_x > 0)
+                {
+                    if (Board[head_y][head_x - 1] == 3)
+                    {
+                    	System.out.println(2);
+                    }
+
+                }
+                
+                if (head_x < 49)
+                {
+                	if (Board[head_y][head_x + 1] == 3)
+                    {
+                    	System.out.println(3);
                     }
                 }
-       
-                Node Start=new Node(headx,heady);
-                Node End = new Node(ax,ay);
                 
-                double dis = Math.sqrt(Math.pow(ax-headx,2)+Math.pow(ay-heady,2));
+                 if (head_y > 0)
+                {
+                	if (Board[head_y - 1][head_x] == 3)
+                    {
+                    	System.out.println(0);
+                    }
+                }
+                
+                 if (head_y < 49)
+                {
+                    if (Board[head_y + 1][head_x] == 3)
+                    {
+                    	System.out.println(1);
+                    }
+                }
+           
+
+                clearBoard();
+
                 
                 
-                //calculate move
-                //goal is far
                 
-                     BFS test = new BFS();
-                     String result = test.search(Board, Start, End);
-                     
-                     if(result.equals("Path Found")) {
-                    	 Node t = test.visited.get(0);
-                    	 while(t.parent!=null) {
-                    		 Board[t.y][t.x]=2;
-                    		 t=t.parent;
-                    	 }
-                    	 if(ispath(headx-1,heady)) {
-             				Print(left);
-             		}
-             		else if(ispath(headx+1,heady)) {
-            			Print(right);
-            		}
-             		else if(ispath(headx,heady+1)) {
-             			Print(down);
-             		}
-             		else if(ispath(headx,heady-1)) {
-             			Print(up);
-             		}
-                     }
-                     //no path found
-                     else {
-                    	 if(isfree(headx-1,heady)) {
-                 			Print(left);
-                 		}
-                 		else if(isfree(headx+1,heady)) {
-                 			Print(right);
-                 		}
-                 		else if(isfree(headx,heady+1)) {
-                 			Print(down);
-                 		}
-                 		else if(isfree(headx,heady-1)) {
-                 			Print(up);
-                 		}
-                     }
-                     
- 		clear();
+                
             }
-      
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    public void Print(int x) {
-    	System.out.println(x);
+    
+    public void printBoard(int[][] Board)
+    {
+    	String line = "";
+    	
+    	for (int i = 0; i < 50; i++)
+    	{
+    		for (int j = 0; j < 50; j++)
+    		{
+    			line = line + Integer.toString(Board[i][j]) + " ";
+    		}
+    		
+    		System.err.println(line);
+    		line = "";
+    	}
     }
-    public void clear() {
-    	
-    	for(int i=0 ; i<Board.length; i++) {
-     	   for(int j=0 ; j<Board[i].length;j++) {
-     		   Board[j][i]=0;
-     	   }
-        }
-    	
+    
+    public void clearBoard()
+    {
+    	for (int i = 0; i < 50; i++)
+    	{
+    		for (int j = 0; j < 50; j++)
+    		{
+    			Board[i][j] = 0;
+    		}
+    	}
     }
-    public double dis(int x,int x2,int y,int y2) {
+    
+    public double getDistance(Node start, Node goal)
+    {
+    	int x1 = start.row;
+    	int y1 = start.col;
     	
-    	double d = Math.pow(x2-x,2);
-    	double d2 = Math.pow(y2-y,2);
-    	double distance = Math.sqrt(d+d2);
+    	int x2 = goal.row;
+    	int y2 = goal.col;
+    	
+    	double distance = Math.abs(x2 - x1) + Math.abs(y2 - y1);
     	return distance;
-    	
     }
-    public void PrintBoard() {
-    	for(int i=0 ; i<Board.length; i++) {
-	     	   for(int j=0 ; j<Board[i].length;j++) {
-	     		   System.err.print(Board[i][j]);
-	     	   }
-	     	   System.err.println();
-	        }
-    	System.err.println();
-    	System.err.println();
-    	System.err.println();
-    	System.err.println();
-    	System.err.println();
-    }
-    public boolean ispath(int x,int y) {
-    	boolean truth = false;
-    	
-    	if(x<0||x>49) {
-    		truth=false;
-    	
-    	}
-    	else if(y<0||y>49) {
-    		truth=false;
-    		
-    	}
-    	else {
-    		if(Board[y][x]==2) {
-    			truth=true;		
-    		}
-    	}
-    	
-    	return truth;	
-    }
-   
-    public boolean isfree(int x,int y) {
-    	boolean truth = false;
-    	if(x<0||x>49) {
-    		truth=false;
-    	
-    	}
-    	else if(y<0||y>49) {
-    		truth=false;
-    		
-    	}
-    	else {
-    		if(Board[y][x]==0) {
-    			truth=true;		
-    		}
-    	}
-    	return truth;
-    }
+    
     
 }
